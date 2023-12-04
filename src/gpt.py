@@ -67,6 +67,6 @@ def save_answer(text: str, filename: str):
     """Сохраняем ответ пока в файл, потом будем сохранять в бд"""
     
     os.makedirs(ANSWERS_FOLDER, exist_ok=True)
-    file = open(os.path.join(ANSWERS_FOLDER, filename), mode="r", encoding="utf-8")
+    file = open(os.path.join(ANSWERS_FOLDER, filename), mode="w", encoding="utf-8")
     file.write(text)
     file.close()

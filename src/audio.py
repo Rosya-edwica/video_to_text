@@ -31,7 +31,7 @@ class Transcriber:
     def clean_cache(self):
         shutil.rmtree(CHUNKS_DIR)
     
-    def transcribe(self, min_per_split: int, method: list[Literal["whisher", "google"]]) -> str:
+    def transcribe(self, min_per_split: int, method: list[Literal["whisper", "google"]]) -> str:
         if self.audio_path is None:
             exit("Забыли передать аудиофайл в class Transcribe")
         
@@ -40,8 +40,8 @@ class Transcriber:
         for i in range(0, sound_mins, min_per_split):
             chunk_filename = os.path.join(CHUNKS_DIR, f"chunk_{i}.wav")
             match method:
-                case "whisher":
-                    chunk_text = self.__get_text_for_chunk_by_whisher(chunk_filename, i, i+min_per_split)
+                case "whisper":
+                    chunk_text = self.__get_text_for_chunk_by_whisper(chunk_filename, i, i+min_per_split)
                 case "google":
                     chunk_text = self.__get_text_for_chunk_by_google(chunk_filename, i, i+min_per_split)
             if chunk_text:
@@ -51,7 +51,7 @@ class Transcriber:
         self.clean_cache()
         return self.text
     
-    def __get_text_for_chunk_by_whisher(self, chunk_path: str, from_min: int, to_min: int):
+    def __get_text_for_chunk_by_whisper(self, chunk_path: str, from_min: int, to_min: int):
         start = from_min * 60 * 1000
         end = to_min * 60 * 1000
         chunk_audio = self.main_audio[start:end]
@@ -79,7 +79,7 @@ class Transcriber:
     def save_text(self):
         os.makedirs(name=TEXT_DIR, exist_ok=True)
         audio_name = self.audio_path.split("/")[-1]
-        text_path = os.path.join(TEXT_DIR, audio_name.replace(".wav", ".txt"))
+        text_path = os.path.join(TEXT_DIR, re.sub(r'\.wav|\.mp3', ".txt", audio_name))
         text_file = open(text_path, encoding="utf-8", mode="w")
         text_file.write(self.text)
         text_file.close()
