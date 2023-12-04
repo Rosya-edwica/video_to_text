@@ -26,7 +26,7 @@ def main():
             continue
         logging.info(msg=f"Время на один файл: {perf_counter() - start_time}\tСтоимость запроса:{answer.Cost.Dollar}\tКоличество токенов:{answer.AnswerTokens + answer.QuestionTokens}")
         logging.info(msg=f"Тест по тексту: {answer.Text}")
-
+        gpt.save_answer(answer, file.replace(".mp4", ".txt"))
 
 if __name__ == "__main__":
     main()

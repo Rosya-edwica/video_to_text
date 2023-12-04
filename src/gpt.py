@@ -9,6 +9,7 @@ if not load_dotenv:
 
 GPT_TOKEN = os.getenv("GPT_TOKEN")
 GPT_MODEL = "gpt-3.5-turbo-16k-0613"
+ANSWERS_FOLDER = "data/answers/"
 
 def get_answer_from_gpt(query: str) -> Answer | str:
     openai.api_key = GPT_TOKEN
@@ -41,6 +42,12 @@ def get_test_for_text(text: str) -> Answer | None:
     answer = get_answer_from_gpt(question)
     if isinstance(answer, Answer):
         return answer
-    
+
     print(f"GPT error: {answer}")
     return None
+
+def save_answer(text: str, filename: str):
+    os.makedirs(ANSWERS_FOLDER, exist_ok=True)
+    file = open(os.path.join(ANSWERS_FOLDER, filename), mode="r", encoding="utf-8")
+    file.write(text)
+    file.close()
