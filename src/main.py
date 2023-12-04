@@ -21,8 +21,11 @@ args = arg_parser.parse_args()
 logging.basicConfig(filename="logs.log", filemode='a', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                     datefmt='%H:%M:%S', level=logging.DEBUG)
 
+if args.method not in ("whisper", "google"):
+    exit("Неправильный аргумент")
 
 def main():
+    print("Selected method:", args.method)
     os.makedirs(VIDEOS_DIR, exist_ok=True)
     if len(os.listdir(VIDEOS_DIR)) == 0:
         exit(f"Добавьте хотя бы одно видео формата .mp4 в папку: {VIDEOS_DIR}")
@@ -39,7 +42,7 @@ def main():
         if answer:
             logging.info(msg=f"Время на один файл: {perf_counter() - start_time}\tСтоимость запроса:{answer.Cost.Dollar}\tКоличество токенов:{answer.AnswerTokens + answer.QuestionTokens}")
             logging.info(msg=f"Тест по тексту: {answer.Text}")
-            gpt.save_answer(answer, file.replace(".mp4", ".txt"))
+            gpt.save_answer(answer.Text, file.replace(".mp4", ".txt"))
         
 
 if __name__ == "__main__":
