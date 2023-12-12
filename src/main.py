@@ -2,10 +2,13 @@ import os
 import logging
 from time import perf_counter
 import argparse
+import json
+from datetime import datetime
 
 import audio
 import video
 import gpt
+from kafka_test import NewProducer
 
 VIDEOS_DIR = "data/videos/"
 GPT_QUERY = "Ты профессионал в обработке большого текста. Мне нужно проверить своих студентов на знание текста.\nСоставь тест из 10 вопросов. Важно, чтобы вопросы были сложными и не содержали в себе подсказок. Ответы должны отличаться друг от друга (нельзя допустить, чтобы ответ всегда был в пункте a) например. Структура твоего ответа: '1. Вопрос\na) первый вариант\nb) второй вариант\nc) третий вариант\nd) четвертый вариант\nОтвет: полный вариант'. Текст из которого нужно брать ответы на эти вопросы:\n"
@@ -30,6 +33,7 @@ def main():
     if len(os.listdir(VIDEOS_DIR)) == 0:
         exit(f"Добавьте хотя бы одно видео формата .mp4 в папку: {VIDEOS_DIR}")
 
+    producer = NewProducer()
     transcriber = audio.Transcriber()
     for file in os.listdir(VIDEOS_DIR):
         start_time = perf_counter()
@@ -43,6 +47,17 @@ def main():
             logging.info(msg=f"Время на один файл: {perf_counter() - start_time}\tСтоимость запроса:{answer.Cost.Dollar}\tКоличество токенов:{answer.AnswerTokens + answer.QuestionTokens}")
             logging.info(msg=f"Тест по тексту: {answer.Text}")
             gpt.save_answer(answer.Text, file.replace(".mp4", ".txt"))
+            kafka_message = {
+                "date": str(datetime.now()),
+                "promt": GPT_QUERY + text,
+                "answer": answer.Text,
+                "cost_usd": answer.Cost.Dollar,
+                "cost_rub": answer.Cost.Ruble,
+                "tokens": answer.AnswerTokens + answer.QuestionTokens,
+                "time_exe": perf_counter() - start_time
+            }
+            if producer is not None:
+                producer.send(json.dumps(kafka_message))
         
 
 if __name__ == "__main__":
