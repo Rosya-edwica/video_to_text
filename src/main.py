@@ -56,8 +56,7 @@ def main():
                 "tokens": answer.AnswerTokens + answer.QuestionTokens,
                 "time_exe": perf_counter() - start_time
             }
-            if producer is not None:
-                producer.send(json.dumps(kafka_message))
+            producer.send_to_text_partition(json.dumps(kafka_message))
         
 
 if __name__ == "__main__":
