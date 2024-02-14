@@ -49,6 +49,7 @@ class Transcriber:
         
         self.save_text()
         self.clean_cache()
+        print(f"Стоимость обработки {self.audio_path} с помощью whisper составила:{sound_mins * gpt.GPT_MIN_PRICE}$ ({sound_mins} минут)")
         return self.text
     
     def __get_text_for_chunk_by_whisper(self, chunk_path: str, from_min: int, to_min: int):
