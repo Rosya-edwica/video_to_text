@@ -1,5 +1,5 @@
 from openai import OpenAI
-from config import Answer, get_gpt_request_cost
+from tools import ResponseGPT, calculate_gpt_request_cost
 import os
 from dotenv import load_dotenv
 
@@ -14,7 +14,7 @@ ANSWERS_FOLDER = "data/answers/"
 GPT_MIN_PRICE = 0.006
 
 
-def create_test_by_text(query: str, text: str) -> Answer | None:
+def create_test_by_text(query: str, text: str) -> ResponseGPT | None:
     """
     query: Промт для получения теста
     text: Текст по которому нужно составить тест
@@ -42,15 +42,15 @@ def create_test_by_text(query: str, text: str) -> Answer | None:
 
     question_tokens = response.usage.prompt_tokens
     answer_tokens = response.usage.completion_tokens
-    return Answer(
+    return ResponseGPT(
         Question=query,
         Text=response.choices[0].message.content,
-        AnswerTokens=answer_tokens,
+        ResponseGPTTokens=answer_tokens,
         QuestionTokens=question_tokens,
-        Cost=get_gpt_request_cost(question_tokens, answer_tokens)
+        Cost=calculate_gpt_request_cost(question_tokens, answer_tokens)
     )
 
-def create_konspect(text:str) -> Answer | None:
+def create_konspect(text:str) -> ResponseGPT | None:
     client = OpenAI(api_key=GPT_TOKEN)
     try:
         response = client.chat.completions.create(
@@ -73,12 +73,12 @@ def create_konspect(text:str) -> Answer | None:
 
     question_tokens = response.usage.prompt_tokens
     answer_tokens = response.usage.completion_tokens
-    return Answer(
+    return ResponseGPT(
         Question="Сделай конспект в формате markdown по этому тексту:\n",
         Text=response.choices[0].message.content,
-        AnswerTokens=answer_tokens,
+        ResponseGPTTokens=answer_tokens,
         QuestionTokens=question_tokens,
-        Cost=get_gpt_request_cost(question_tokens, answer_tokens)
+        Cost=calculate_gpt_request_cost(question_tokens, answer_tokens)
     )
 
 def transcribe_audio(path: str) -> str:

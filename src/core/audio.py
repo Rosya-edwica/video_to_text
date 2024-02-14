@@ -6,11 +6,15 @@ from typing import Literal
 
 import speech_recognition as sr
 from pydub import AudioSegment
-
-import gpt
+import logging
+from core import gpt
 
 CHUNKS_DIR = "data/chunks/"
 TEXT_DIR = "data/text/"
+
+
+def clean_cache():
+    shutil.rmtree(CHUNKS_DIR)
 
 
 class Transcriber:
@@ -28,9 +32,6 @@ class Transcriber:
         elif self.audio_path.endswith(".mp3"):
             self.main_audio = AudioSegment.from_mp3(self.audio_path)
 
-    def clean_cache(self):
-        shutil.rmtree(CHUNKS_DIR)
-    
     def transcribe(self, min_per_split: int, method: list[Literal["whisper", "google"]]) -> str:
         if self.audio_path is None:
             exit("Забыли передать аудиофайл в class Transcribe")
@@ -44,15 +45,21 @@ class Transcriber:
                     chunk_text = self.__get_text_for_chunk_by_whisper(chunk_filename, i, i+min_per_split)
                 case "google":
                     chunk_text = self.__get_text_for_chunk_by_google(chunk_filename, i, i+min_per_split)
+                case _:
+                    return ""
+
             if chunk_text:
                 self.text += chunk_text
         
         self.save_text()
-        self.clean_cache()
+        clean_cache()
         print(f"Стоимость обработки {self.audio_path} с помощью whisper составила:{sound_mins * gpt.GPT_MIN_PRICE}$ ({sound_mins} минут)")
         return self.text
     
     def __get_text_for_chunk_by_whisper(self, chunk_path: str, from_min: int, to_min: int):
+        """Транскрибация текста с помощью OpenAI Whisper
+        Данный подход выделяется высокой скоростью и качеством обработки.
+        Но он требует подписку на OpenAI"""
         start = from_min * 60 * 1000
         end = to_min * 60 * 1000
         chunk_audio = self.main_audio[start:end]
@@ -62,6 +69,9 @@ class Transcriber:
         return text
 
     def __get_text_for_chunk_by_google(self, chunk_path: str, from_min: int, to_min: int) -> str | None:
+        """Транскрибация текста с помощью Google Recognizer
+        Данный подход работает дольше и выдает текст не лучшего качества, но зато является бесплатным"""
+
         start = from_min * 60 * 1000
         end = to_min * 60 * 1000
         chunk_audio = self.main_audio[start:end]
@@ -70,11 +80,11 @@ class Transcriber:
             audio_listened = self.Recognizer.record(source)
             try:
                 text = self.Recognizer.recognize_google(audio_listened, language="ru-RU")
-            except sr.UnknownValueError as e:
-                print("Error:", str(e))
+            except sr.UnknownValueError as err:
+                logging.error(f"Ошибка при транскрибации аудио с помощью Google Recognizer: {err}")
                 return None
             else:
-                print(chunk_path, ":", text)
+                logging.info(f"Обработали кусок аудио: {chunk_path}")
                 return text
 
     def save_text(self):
