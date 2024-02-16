@@ -165,3 +165,4 @@ src/data/text/*
 src/data/audio/*
 src/data/videos/*
 *.json
+*.DS_Store
