@@ -164,3 +164,4 @@ cython_debug/
 src/data/text/*
 src/data/audio/*
 src/data/videos/*
+*.json

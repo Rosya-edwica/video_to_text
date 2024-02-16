@@ -23,3 +23,8 @@ class Question(NamedTuple):
 
 class Test(NamedTuple):
     Questions: list[Question]
+
+class VideoUrl(NamedTuple):
+    Name: str
+    DownloadUrl: str
+    MainUrl: str

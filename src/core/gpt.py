@@ -19,7 +19,7 @@ def create_test_by_text(query: str, text: str) -> ResponseGPT | None:
     query: Промт для получения теста
     text: Текст по которому нужно составить тест
     """
-
+    print("Генерируем тест по тексту...")
     client = OpenAI(api_key=GPT_TOKEN)
     try:
         response = client.chat.completions.create(
@@ -45,38 +45,7 @@ def create_test_by_text(query: str, text: str) -> ResponseGPT | None:
     return ResponseGPT(
         Question=query,
         Text=response.choices[0].message.content,
-        ResponseGPTTokens=answer_tokens,
-        QuestionTokens=question_tokens,
-        Cost=calculate_gpt_request_cost(question_tokens, answer_tokens)
-    )
-
-def create_konspect(text:str) -> ResponseGPT | None:
-    client = OpenAI(api_key=GPT_TOKEN)
-    try:
-        response = client.chat.completions.create(
-            model=GPT_MODEL,
-            temperature=0,
-            messages=[
-                {
-                    "role": "system",
-                    "content": "Сделай конспект (конспект не должен быть сухим, его должно быть приятно читать, если в тексте недостаточно нужной информации, можешь добавить ее от себя`) в формате markdown по этому тексту:\n",
-                },
-                {
-                    "role": "user",
-                    "content": text,
-                }
-            ],
-        )
-    except BaseException as err:
-        print(f"Не удалось подключиться к GPT. Текст ошибки: {err}")
-        return
-
-    question_tokens = response.usage.prompt_tokens
-    answer_tokens = response.usage.completion_tokens
-    return ResponseGPT(
-        Question="Сделай конспект в формате markdown по этому тексту:\n",
-        Text=response.choices[0].message.content,
-        ResponseGPTTokens=answer_tokens,
+        AnswerTokens=answer_tokens,
         QuestionTokens=question_tokens,
         Cost=calculate_gpt_request_cost(question_tokens, answer_tokens)
     )
@@ -89,15 +58,7 @@ def transcribe_audio(path: str) -> str:
     client = OpenAI(api_key=GPT_TOKEN)
     answer = client.audio.transcriptions.create(
         model="whisper-1",
-        file=audio_file
+        file=audio_file,
+        prompt="Сократи текст максимально, чтобы при этом сохранить главную суть и факты. Лишние слова и воду нужно убрать"
     )
     return answer.text
-
-
-def save_answer(text: str, filename: str):
-    """Сохраняем ответ пока в файл, потом будем сохранять в бд"""
-    
-    os.makedirs(ANSWERS_FOLDER, exist_ok=True)
-    file = open(os.path.join(ANSWERS_FOLDER, filename), mode="w", encoding="utf-8")
-    file.write(text)
-    file.close()

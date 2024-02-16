@@ -39,3 +39,6 @@ yarl==1.9.3
 python-dotenv
 kafka-python
 pymongo
+wget
+gensim==3.8
+rich
