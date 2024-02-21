@@ -34,6 +34,27 @@ class Transcriber:
         elif self.audio_path.endswith(".mp3"):
             self.main_audio = AudioSegment.from_mp3(self.audio_path)
 
+
+    def transcribe_by_chunks(self, chunks_files: list[str]) -> str:
+        text = ""
+        for chunk in chunks_files:
+            text += gpt.transcribe_audio(chunk)
+        shutil.rmtree(CHUNKS_DIR)
+        return summarize(text, ratio=0.7)
+
+    def create_chunks(self, min_per_split: int):
+        audio_name = self.audio_path.split("/")[-1].replace(".mp3", "")
+        sound_mins = math.ceil(self.main_audio.duration_seconds / 60)
+        os.makedirs(f"data/chunks/{audio_name}", exist_ok=True)
+
+        for i in range(0, sound_mins, min_per_split):
+            chunk_filename = os.path.join(f"data/chunks/{audio_name}", f"chunk_{i}.wav")
+            print(chunk_filename)
+            start = i * 60 * 1000
+            end = (i + min_per_split) * 60 * 1000
+            chunk_audio = self.main_audio[start:end]
+            chunk_audio.export(chunk_filename, format="mp3")
+
     def transcribe(self, min_per_split: int, method: list[Literal["whisper", "google"]], summarize_text: bool = False) -> str:
         """summarize - сокращать текст или нет"""
         if self.audio_path is None:

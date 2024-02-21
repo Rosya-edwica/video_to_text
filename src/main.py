@@ -88,10 +88,12 @@ def generate_test_by_video_file(videofile_path: str, transcribation_method: str)
         return
     start_time = perf_counter()
     video_name = videofile_path.replace(".mp4", "")
-    audio_file = core.video.video_to_audio(videofile_path, audio_format="mp3")
+    # audio_file = core.video.video_to_audio(videofile_path, audio_format="mp3")
+    # transcriber.set_new_audio_path(audio_file)
+    # text = transcriber.transcribe(min_per_split=1, method=transcribation_method, summarize_text=True)
 
-    transcriber.set_new_audio_path(audio_file)
-    text = transcriber.transcribe(min_per_split=1, method=transcribation_method, summarize_text=True)
+    chunks = core.video.video_to_chunks(videofile_path)
+    text = transcriber.transcribe_by_chunks(chunks)
     mongo.save_transcribation(video_name, text)
     answer = core.gpt.create_test_by_text(GPT_QUERY, text)
     if not answer:
@@ -110,9 +112,12 @@ def generate_test_by_video_file(videofile_path: str, transcribation_method: str)
     }
     producer.send_to_text_partition(json.dumps(kafka_message))
 
+
 if __name__ == "__main__":
     mongo = Mongo()
     producer = tools.NewProducer()
     transcriber = core.audio.Transcriber()
     main()
+    # create_chunks_for_all_audio_files()
+    # create_test_by_chunks()
     mongo.download_all()
